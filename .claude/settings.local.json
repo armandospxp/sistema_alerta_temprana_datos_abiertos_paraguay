@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find '/Users/landa/Documents/Maestria en Ciencias de datos/proyecto_final/parte_practica' -maxdepth 3 -not -path */venv* -not -path */.git* -not -path */__pycache__* -not -path */.DS_Store)"
+    ]
+  }
+}
