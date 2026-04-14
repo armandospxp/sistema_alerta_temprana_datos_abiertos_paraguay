@@ -1,0 +1,50 @@
+# ── Datos sensibles (nunca versionar) ─────────────────────────────────────────
+data/raw/
+data/processed/
+*.csv
+*.parquet
+*.xlsx
+*.xls
+
+# ── Modelo serializado (artefactos pesados → usar DVC o similar) ───────────────
+src/modelo/modelo_sat.pkl
+src/modelo/metricas.json
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Entornos virtuales ────────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Logs y temporales ─────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
+
+
+# ── Claude ─────────────────────────────────────────────────────────
+
+CLAUDE.md
