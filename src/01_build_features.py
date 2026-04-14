@@ -170,25 +170,17 @@ def build_features(df_raw: pd.DataFrame, df_bcp: pd.DataFrame) -> pd.DataFrame:
         labels=[0, 1, 2, 3, 4]
     ).astype(float)
 
-    # ── 6. Features macro (BCP) ────────────────────────────────────────────────
-    # tpm, mora_sistema_consumo, ipc_interanual, usd_pyg ya fueron pegados
-    # Agregamos: presión de tasas relativa (banca del cliente vs TPM sistema)
-    # banca parece ser tasa efectiva anual en formato basispuntos / 10
-    df["banca_tasa_pct"] = df["banca"] / 10   # ej: 240 → 24%
-    df["spread_cliente_sistema"] = df["banca_tasa_pct"] - df["tpm"]
-
-    # ── 7. Variable objetivo: mora_90 como target principal ───────────────────
+    # ── 6. Variable objetivo: mora_90 como target principal ───────────────────
     # También guardamos atraso_30 y atraso_60 para modelos en cascada
     # (atraso_30 es la alerta más temprana → la que más nos interesa)
 
-    # ── 8. Selección de columnas finales ──────────────────────────────────────
+    # ── 7. Selección de columnas finales ──────────────────────────────────────
     FEATURES = [
         # Identificador
         "id_solicitud",
         # Variables internas - crédito
         "monto_solicitado", "cant_cuotas", "cuota_mensual_est",
-        "ratio_cuota_ingreso", "factor_costo_credito",
-        "banca_tasa_pct", "medio",
+        "ratio_cuota_ingreso", "factor_costo_credito", "medio",
         # Variables internas - cliente
         "edad", "edad_bucket", "ingreso", "ingreso_real",
         "antiguedad_laboral", "antiguedad_negofin",
@@ -200,7 +192,7 @@ def build_features(df_raw: pd.DataFrame, df_bcp: pd.DataFrame) -> pd.DataFrame:
         "maximo_atraso_negofin", "severidad_atraso", "atraso_promedio_norm",
         # Variables macro BCP
         "tpm", "delta_tpm_3m", "mora_sistema_consumo", "spread_mora",
-        "ipc_interanual", "usd_pyg", "spread_cliente_sistema", "ingreso_real",
+        "ipc_interanual", "usd_pyg", "ingreso_real",
         # Metadatos útiles
         "periodo_desembolso", "nombre_departamento_particular",
         # Targets
