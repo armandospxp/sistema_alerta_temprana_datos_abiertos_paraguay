@@ -170,9 +170,26 @@ def build_features(df_raw: pd.DataFrame, df_bcp: pd.DataFrame) -> pd.DataFrame:
         labels=[0, 1, 2, 3, 4]
     ).astype(float)
 
-    # ── 6. Variable objetivo: mora_90 como target principal ───────────────────
-    # También guardamos atraso_30 y atraso_60 para modelos en cascada
-    # (atraso_30 es la alerta más temprana → la que más nos interesa)
+    # ── 6. Variables de Survival Analysis ─────────────────────────────────────
+    # Los targets atraso_30/60/90 son CUMULATIVOS: atraso_60=1 implica atraso_30=1.
+    # Por eso no existen eventos en T=2 (nadie tiene atraso_60=1 sin atraso_30=1).
+    #
+    # Diseño adoptado (vintage survival analysis):
+    #   tiempo_evento (T):
+    #     - Si atraso_30=1: T=1 mes (incumplió en algún punto de la vida del crédito;
+    #       aproximamos al primer período porque los targets son binarios, no temporales)
+    #     - Si atraso_30=0: T=cant_cuotas (censurado al final del plazo del crédito;
+    #       el cliente sobrevivió sin incumplir durante toda la vigencia observada)
+    #   evento (E): 1 si incumplió (atraso_30=1), 0 si censurado
+    #
+    # Esto introduce variación temporal real en los censurados (6 a 36+ meses),
+    # aprovechando el plazo del crédito como ventana de observación individual.
+    df["evento"] = df["atraso_30"].astype(int)
+    df["tiempo_evento"] = np.where(
+        df["atraso_30"] == 1,
+        1,                           # incumplió → T=1 mes (first-hitting-time aproximado)
+        df["cant_cuotas"].clip(1),   # no incumplió → T=plazo del crédito (censurado)
+    )
 
     # ── 7. Selección de columnas finales ──────────────────────────────────────
     FEATURES = [
@@ -195,8 +212,10 @@ def build_features(df_raw: pd.DataFrame, df_bcp: pd.DataFrame) -> pd.DataFrame:
         "ipc_interanual", "usd_pyg", "ingreso_real",
         # Metadatos útiles
         "periodo_desembolso", "nombre_departamento_particular",
-        # Targets
+        # Targets originales (referencia)
         "atraso_30", "atraso_60", "atraso_90",
+        # Variables de survival analysis
+        "tiempo_evento", "evento",
     ]
     # Deduplica por si acaso
     FEATURES = list(dict.fromkeys(FEATURES))
@@ -229,11 +248,22 @@ def main():
     print(f"── Guardado en: {OUT_PATH}")
 
     # Resumen
-    print("\n── Distribución de targets:")
+    print("\n── Distribución de targets originales:")
     for t in ["atraso_30", "atraso_60", "atraso_90"]:
         n = df_feat[t].sum()
         pct = n / len(df_feat) * 100
         print(f"   {t}: {n:,} en mora ({pct:.1f}%)")
+
+    print("\n── Distribución survival analysis:")
+    n_evento = df_feat["evento"].sum()
+    pct_evento = n_evento / len(df_feat) * 100
+    print(f"   Eventos (incumplió):  {n_evento:,} ({pct_evento:.1f}%)")
+    print(f"   Censurados:           {len(df_feat) - n_evento:,} ({100 - pct_evento:.1f}%)")
+    t_series = df_feat["tiempo_evento"]
+    print(f"   T eventos (todos =1): {df_feat[df_feat['evento']==1]['tiempo_evento'].unique().tolist()}")
+    print(f"   T censurados — min: {t_series[df_feat['evento']==0].min():.0f}  "
+          f"med: {t_series[df_feat['evento']==0].median():.0f}  "
+          f"max: {t_series[df_feat['evento']==0].max():.0f} meses")
 
     print("\n── Sample de features (primeras 3 filas):")
     print(df_feat.head(3).to_string())
